@@ -4,6 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
+using UnityEngine.UI;
 using System;
 
 public class LobbyManager : MonoBehaviourPunCallbacks
@@ -12,6 +13,10 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject QuickMatchPanel;
     [SerializeField] private GameObject LoadingPanel;
     [SerializeField] private TMP_Text LoadingText;
+    [SerializeField] private TMP_InputField UserNameInputField;
+    [SerializeField] private Button QuickMatchButton;
+
+    private string PLAYER_NAME_PREF = "PLAYER_USERNAME";
 
     // Start is called before the first frame update
     void Start()
@@ -22,6 +27,22 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         QuickMatchPanel.SetActive(false);
         LoadingPanel.SetActive(true);
         LoadingText.SetText("Connecting to server...");
+        QuickMatchButton.interactable = false;
+    }
+
+    private void GetUserProfile()
+    {
+        string defaultName = string.Empty;
+        if (UserNameInputField != null)
+        {
+            if (PlayerPrefs.HasKey(PLAYER_NAME_PREF))
+            {
+                defaultName = PlayerPrefs.GetString(PLAYER_NAME_PREF);
+                UserNameInputField.text = defaultName;
+            }
+        }
+
+        PhotonNetwork.NickName = defaultName;
     }
 
     public override void OnConnectedToMaster()
@@ -33,12 +54,33 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         LoadingPanel.SetActive(false);
         MainMenuPanel.SetActive(true);
         LoadingText.SetText("Connected to server");
+
+        GetUserProfile();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void CheckUserName()
     {
-        
+        if (UserNameInputField.text.Length > 3 && UserNameInputField.text.Length < 12)
+        {
+            QuickMatchButton.interactable = true;
+        }
+        else
+        {
+            QuickMatchButton.interactable = false;
+        }
+    }
+
+    public void SelectUserName()
+    {
+        string username = UserNameInputField.text.ToString();
+
+        if (string.IsNullOrEmpty(username))
+        {
+            return;
+        }
+
+        PhotonNetwork.NickName = username;
+        PlayerPrefs.SetString(PLAYER_NAME_PREF, username);
     }
 
     public void QuickMatch()
